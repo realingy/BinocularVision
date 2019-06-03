@@ -1,13 +1,6 @@
 #ifndef H_SC_MAIN
 #define H_SC_MAIN
 
-/*
-extern "C"
-{
-    #include "highgui.h"
-}
-*/
-
 #include <iostream>
 #include <stdlib.h>
 #include <stdio.h>

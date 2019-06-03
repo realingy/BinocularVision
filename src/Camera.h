@@ -3,9 +3,7 @@
 
 #include "main.h"
 
-//-----------------------------------------------------------------------------------------
 class CCamera
-//-----------------------------------------------------------------------------------------
 {
 public:
 	char filename[128];
@@ -24,11 +22,10 @@ public:
 
 	// CONSTRUCTEUR:
 	CCamera(void);
-	CCamera(CvSize imgsize, const char* name, int ID,int); // ouverture d'une s閝uence d'images au format PGM
+	CCamera(CvSize imgsize, const char* name, int ID,int);
 	void SetParameter(CvSize imgsize, const char* name, int ID);//设置摄像机参数
 	~CCamera(void);
 
-	// Lecture et 閏riture des param鑤res ds un fichier texte, 1 valeur  par ligne
 	// 4 params intrinseques, 4 params distorsion, 9 params rotation, 3 params translation:
 	int LoadCameraParameters();
 	int SaveCameraParameters();

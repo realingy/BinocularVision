@@ -12,8 +12,8 @@ typedef Point2i Point;
 #endif
 
 int Calibration(char** , int, CvSize, int, CCamera*);
-void  SolveCameraPose(CCamera*,CCamera*,int);//求解两个摄像机的位置关系
-#if 1
+void  SolveCameraPose(CCamera*, CCamera*,int);//求解两个摄像机的位置关系
+#if 0
 void  UndistortPoint(const CvPoint2D64d* ptSrc,  CvPoint2D64d* ptDst, const CvMat* intrinsic_matrix, const CvMat* distortion_coeffs );
 void  Reconstruct3DPoint(const CvPoint2D64d* ptuvL,CCamera* pCameraLeft,const CvPoint2D64d* ptuvR,CCamera* pCameraRight,CvPoint3D64f* ptXYZ,const int nbPoints);
 void  FindCorners(char* strFile,CvPoint2D64d* ptuv,const CvSize CBCornersSize, CCamera* pCamera );
@@ -21,7 +21,11 @@ void  SaveResultToFile(char* strFile,CvPoint2D64d* ptuv,const int);
 void  ReadResultFromFile(char* strFile,CvPoint2D64d* ptuv,const int nbCornersFound);
 #endif
 
-//void  UndistortPoint(const Point2d* ptSrc,  Point2d* ptDst, const CvMat* intrinsic_matrix, const CvMat* distortion_coeffs );
+void  UndistortPoint(const CvPoint2D64f* ptSrc,  CvPoint2D64f* ptDst, const CvMat* intrinsic_matrix, const CvMat* distortion_coeffs );
+void  Reconstruct3DPoint(const CvPoint2D64f* ptuvL,CCamera* pCameraLeft,const CvPoint2D64f* ptuvR,CCamera* pCameraRight,CvPoint3D64f* ptXYZ,const int nbPoints);
+void  FindCorners(char* strFile, CvPoint2D64f* ptuv,const CvSize CBCornersSize, CCamera* pCamera );
+void  SaveResultToFile(char* strFile,CvPoint2D64f* ptuv,const int);
+void  ReadResultFromFile(char* strFile,CvPoint2D64f* ptuv,const int nbCornersFound);
 
 #endif
 

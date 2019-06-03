@@ -1,19 +1,13 @@
 /***************************************************************************
-						Calibration.cpp  -  description
-                             -------------------
 	begin                : aout 15 2004
     copyright            : (C) 2004 by Simon CONSEIL
-    email                : bouldeglace@yahoo.fr
-
  ***************************************************************************/
 
 #include "main.h"
 
 using namespace std;
 
-//----------------------------------------------------------------------------------------------------------------
 int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize, CCamera* camera)
-//----------------------------------------------------------------------------------------------------------------
 {
     int i=0, j=0, t=0, x=0, y=0;
 	int nbCornersFound;					// nb de points interieurs trouves
@@ -39,8 +33,8 @@ int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize
 	CvVect64d transVects	= new double [3 * nbImages];	// vecteur de translation
 	CvVect64d distortion	= new double [4];				// distortion
 	
-	CvPoint2D64d* uv		= new CvPoint2D64d [nbPoints * nbImages]; 
-	CvPoint3D64d* XYZ		= new CvPoint3D64d [nbPoints * nbImages]; 
+	CvPoint2D64f* uv		= new CvPoint2D64f [nbPoints * nbImages]; 
+	CvPoint3D64f* XYZ		= new CvPoint3D64f [nbPoints * nbImages]; 
     CvPoint2D32f* corners	= new CvPoint2D32f [nbPoints + 1];
 	CvPoint onecorner;
 
@@ -88,8 +82,7 @@ int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize
 	"61", "62", "63", "64", "65", "66", "67", "68", "69", "70", 
 	"71", "72", "73", "74", "75", "76", "77", "78", "79", "80" };
 
-	//			BOUCLE			 //
-	//-----------------------------
+	// BOUCLE
 	for ( i = 0; i < nbImages; i++ )
 	{
 		nbCornersFound = nbPoints ;		// reset nbCornersFound
@@ -151,7 +144,7 @@ int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize
 		//cvShowImage("image",img1);
 		//cvWaitKey(0);
         //添加一个测试函数，将检测到的坐标记录下来
-      char filenames[256];
+		char filenames[256];
         static int cout = 0;
 		cout++;
 	//	sprintf(filenames, "data%d%s", cout,".txt");
@@ -205,7 +198,7 @@ int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize
 	  focal[0] = cameraMatrix[0];
 	  focal[1] = cameraMatrix[4];
 
-	CvPoint2D64d principal;
+	CvPoint2D64f principal;
 	  principal.x = cameraMatrix[2];
 	  principal.y = cameraMatrix[5];
 
@@ -271,8 +264,9 @@ int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize
 		camera->MatRot[j] = camera->pdAllMatRot[j];
 	for ( j=0 ; j<3 ; j++)
 		camera->VecTrans[j] = camera->pdAllVecTrans[j];
+
 	// enregistrement des parametres:
-		//-------------------------------
+
 	camera->Intrinsic[0] = focal[0];
 	camera->Intrinsic[1] = focal[1];
 	camera->Intrinsic[2] = principal.x;
@@ -288,6 +282,7 @@ int Calibration(char** names, int nbImages, CvSize CBCornersSize, int squareSize
 	if(pointnumbers)delete[] pointnumbers;
 	return 1;
 }
+
 //求解两个摄像机的位置关系
 void  SolveCameraPose(CCamera* pCameraLeft,CCamera* pCameraRight,const int nbImages)
 {
@@ -376,9 +371,9 @@ distortion_coeffs
 四个变形系数组成的向量，大小为4x1或者1x4，格式为[k1,k2,p1,p2]。 
 */
 
-void  UndistortPoint(const CvPoint2D64d* ptSrc,  CvPoint2D64d* ptDst, const CvMat* intrinsic_matrix, const CvMat* distortion_coeffs )
+void  UndistortPoint(const CvPoint2D64f* ptSrc,  CvPoint2D64f* ptDst, const CvMat* intrinsic_matrix, const CvMat* distortion_coeffs )
 {
-	CvPoint2D64d ptDistort,ptUndistort;//所求点的变形后和矫正后真实坐标
+	CvPoint2D64f ptDistort,ptUndistort;//所求点的变形后和矫正后真实坐标
 
     //摄像机的焦距和主点
 	const double fx = cvmGet(intrinsic_matrix,0,0);
@@ -421,7 +416,7 @@ void  UndistortPoint(const CvPoint2D64d* ptSrc,  CvPoint2D64d* ptDst, const CvMa
 	f2x = 2*p2*y1;
 	f2y = 1+k1*r2+k2*r2*r2 + 4*p1*y1 +2*p2*x1;
 	
-	CvPoint2D64d ptDelta;
+	CvPoint2D64f ptDelta;
 	do
 	{
 		iCount ++ ;
@@ -464,7 +459,7 @@ void  UndistortPoint(const CvPoint2D64d* ptSrc,  CvPoint2D64d* ptDst, const CvMa
 //ptXYZ:三维世界坐标
 //nbPoints:重建点的数目
 
-void  Reconstruct3DPoint(const CvPoint2D64d* ptuvL,CCamera* pCameraLeft,const CvPoint2D64d* ptuvR,CCamera* pCameraRight,CvPoint3D64f* ptXYZ,const int nbPoints)
+void  Reconstruct3DPoint(const CvPoint2D64f * ptuvL, CCamera * pCameraLeft,const CvPoint2D64f * ptuvR, CCamera * pCameraRight, CvPoint3D64f * ptXYZ, const int nbPoints)
 {
 	//重建出每个点的三维坐标
 	int i,t;
@@ -521,7 +516,7 @@ void  Reconstruct3DPoint(const CvPoint2D64d* ptuvL,CCamera* pCameraLeft,const Cv
 //ptuv：指向存放角点数据的内存的指针
 //CBCornersSize：棋盘格的大小
 //pCamera：指向拍摄图像的摄像机，利用此摄像机参数对角点的位置进行校正，若为NULL则不校正
-void  FindCorners(char* strFile,CvPoint2D64d* ptuv,const CvSize CBCornersSize, CCamera* pCamera = NULL)
+void  FindCorners(char* strFile, CvPoint2D64f * ptuv, const CvSize CBCornersSize, CCamera* pCamera = NULL)
 {
 	int nbPoints = CBCornersSize.height*CBCornersSize.width;//获得图像中一共有的角点的数目
 	//对数据进行检查
@@ -532,7 +527,7 @@ void  FindCorners(char* strFile,CvPoint2D64d* ptuv,const CvSize CBCornersSize, C
 	}
 	if(NULL == ptuv)
 	{
-       ptuv = new CvPoint2D64d[nbPoints];
+       ptuv = new CvPoint2D64f[nbPoints];
 	}
 	//设置初始化数据
     int i=0, j=0, t=0, x=0, y=0;
@@ -643,7 +638,7 @@ void  FindCorners(char* strFile,CvPoint2D64d* ptuv,const CvSize CBCornersSize, C
 	cvReleaseImage( &greyimg );
 	if(NULL != corners) delete []corners;
 }
-void  SaveResultToFile(char* strFile,CvPoint2D64d* ptuv,const int nbCornersFound)
+void  SaveResultToFile(char* strFile,CvPoint2D64f * ptuv,const int nbCornersFound)
 {
     FILE *cps;
 	cps = fopen(strFile, "w");
@@ -666,7 +661,7 @@ void  SaveResultToFile(char* strFile,CvPoint2D64d* ptuv,const int nbCornersFound
 	}
 	fclose(cps);
 }
-void  ReadResultFromFile(char* strFile,CvPoint2D64d* ptuv,const int nbCornersFound)
+void  ReadResultFromFile(char* strFile,CvPoint2D64f * ptuv,const int nbCornersFound)
 {
 	FILE *cps;
 	cps = fopen(strFile, "r+");

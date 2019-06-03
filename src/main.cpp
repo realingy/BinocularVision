@@ -1,19 +1,15 @@
 /***************************************************************************
-    
-						         main.cpp  -  description
-                             -------------------
-    
     begin                : aout 01 2004
     copyright            : (C) 2004 by Simon CONSEIL
-    email                : bouldeglace@yahoo.fr
-
  ***************************************************************************/
+
 #include "main.h"
 
 using namespace std;
 
 void Reconstruct3DPoint(CCamera* Cam_gauche,CCamera* Cam_droite,CvSize CBCornersSize,char *pcLeftImage,char *pcRightImage);
-double Dis(CvPoint3D64d pA,CvPoint3D64d pB)
+
+double Dis(CvPoint3D64f pA, CvPoint3D64f pB)
 {
 	double Temp = (pA.x-pB.x)*(pA.x-pB.x)+(pA.y-pB.y)*(pA.y-pB.y)+(pA.z-pB.z)*(pA.z-pB.z);
 	double d = sqrt(Temp);
@@ -36,9 +32,11 @@ double Dis(CvPoint3D64d pA,CvPoint3D64d pB)
 		//file.SeekToEnd();
 		//file.Write(str,str.GetLength());
 	}
+
 	//str.Format("%f  ",d);
 	//file.SeekToEnd();
 	//file.Write(str,str.GetLength());
+
 	ave += abs(d-30)/30;
 	if (i == 95 )
 	{
@@ -131,9 +129,6 @@ int main(void)
 			
 		 }
 	 }
-
-
-
   
 	CvSize CBCornersSize = {8,6};		// nb de points interieurs de la mire
 
@@ -145,9 +140,6 @@ int main(void)
                         "./stereo_example/right04.jpg", "./stereo_example/right09.jpg", "./stereo_example/right10.jpg"};
     CvSize CBCornersSize = {9,6};*/
 	int squareSize = 30 ;				// taille des carres de la mire
-   
-	
-
 	
 	/* TESTS AVEC IMAGES DE CALIB ( 640 , 480 )*/
 	CCamera Cam_gauche(Image_size, "C://LeftCamerParameter.txt", 1,nbImages);
@@ -178,31 +170,21 @@ int main(void)
 void Reconstruct3DPoint(CCamera* Cam_gauche,CCamera* Cam_droite,CvSize CBCornersSize,char *pcLeftImage,char *pcRightImage)
 {
 	int i=0, j=0, t=0, x=0, y=0;
-			// nb de points interieurs trouves
+	// nb de points interieurs trouves
 	int nbLines = CBCornersSize.height ;// nb de lignes ds la mire
 	int nbCols	= CBCornersSize.width ;	// nb de colonnes ds la mire
 	int nbPoints = nbLines * nbCols;
 
-
-	
-
-	// Matrices et Vecteurs des parametres:
-	//-------------------------------------
-	
-	
-	CvPoint2D64d* uvL		= new CvPoint2D64d [nbPoints]; 
-	CvPoint2D64d* uvR		= new CvPoint2D64d [nbPoints]; 
-	CvPoint3D64d* XYZ		= new CvPoint3D64d [nbPoints]; 
-
+	CvPoint2D64f * uvL	= new CvPoint2D64f[nbPoints]; 
+	CvPoint2D64f * uvR	= new CvPoint2D64f[nbPoints]; 
+	CvPoint3D64f * XYZ	= new CvPoint3D64f[nbPoints]; 
  
-   
 	char* names[] = {"./calib/Stereo_Left_2.bmp","./calib/Stereo_Right_2.bmp"};
     //char* names[] = {"./stereo_example/left10.jpg","./stereo_example/right10.jpg"};
 
 	//分别获得左右视图的角点坐标
     FindCorners(pcLeftImage,uvL,CBCornersSize,NULL);//Cam_gauche);
     FindCorners(pcRightImage,uvR,CBCornersSize,NULL);//Cam_droite);
-
 
     double KL[3][3] = { Cam_gauche->Intrinsic[0], 0, Cam_gauche->Intrinsic[2], 
                    0, Cam_gauche->Intrinsic[1], Cam_gauche->Intrinsic[3], 

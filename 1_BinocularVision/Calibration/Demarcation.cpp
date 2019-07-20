@@ -17,10 +17,9 @@ int main()
 	string infilename = "G:/SegPicture/left/left.txt";
 	string outfilename = "G:/SegPicture/left/left_biaoding.txt";
 
-	//标定所用图片的文件路径，每一行保存一个标定图片的路径  ifstream是用来从硬盘中读取文件到内存
+	//标定所用图片的文件路径，每一行保存一个标定图片的路径ifstream是用来从硬盘中读取文件到内存
 	ifstream fin(infilename);
 	ofstream fout(outfilename);
-
 
 	/*
 	读取每一幅图像，从中提取角点，然后对角点进行亚像素精细化，获取每个角点在像素坐标系中的坐标
@@ -47,7 +46,6 @@ int main()
 				cout << "imagewidth=" << imagesize.width;
 				cout << "\nimageheight=" << imagesize.height;
 			}
-			cout << "\nimagecout=" << imagecount;
 			imagecount++;
 			/*
 			开始提取每一张图像上的角点
@@ -69,6 +67,9 @@ int main()
 				waitKey(500);
 			}
 		}
+
+		cout << "\nimagecount=" << imagecount; //标定图片的数量
+
 		//计算每张图片上的角点总数
 		int cornerNum = boardSize.width*boardSize.height;
 		//计算所有标定图片的角点总数目
@@ -137,8 +138,8 @@ int main()
 		double totalErr=0;//所有图像的平均误差总和
 		double err = 0;//每幅图像的平均误差
 		vector<Point2f>imagePoints2;//保存根据标定结果重新计算的到的投影点的坐标
+
 		cout << "每幅图像的标定误差\n";
-		//fout << "每幅图像的标定误差";
 		for ( i = 0; i < imagecount; i++)
 		{
 			vector<Point3f>tempPointset = objectPoints[i];//得到每张标定板图像的原世界坐标
@@ -148,7 +149,7 @@ int main()
 			vector<Point2f>tempImagePoint = imagePointsSeq[i];//得到每张标定板上的角点原像素坐标
 			Mat tempImagePointMat = Mat(1, tempImagePoint.size(), CV_32FC2);//将标定板上的角点拉直排布
 			Mat imagePoints2Mat = Mat(1, imagePoints2.size(), CV_32FC2);//将标定板上的角点拉直排布
-			for (int j = 0; j < tempImagePoint.size(); j++)//分别得到标定板原来的各个焦点的像素坐标
+			for (int j = 0; j < tempImagePoint.size(); j++)//分别得到标定板原来的各个角点的像素坐标
 			{
 				//得到由世界坐标根据标定结果重投影得到的像素坐标
 				imagePoints2Mat.at<Vec2f>(0, j) = Vec2f(imagePoints2[j].x, imagePoints2[j].y);

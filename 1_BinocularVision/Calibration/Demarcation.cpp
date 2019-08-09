@@ -14,16 +14,14 @@ int main()
 	std::vector<std::string>filenames;
 
 	//相机拍摄的标定板的图片路径以及标定结果的保存文件。
-	string infilename = "G:/SegPicture/left/left.txt";
-	string outfilename = "G:/SegPicture/left/left_biaoding.txt";
+	string infilename = "left.txt";
+	string outfilename = "left_calib.txt";
 
-	//标定所用图片的文件路径，每一行保存一个标定图片的路径ifstream是用来从硬盘中读取文件到内存
+	//标定所用图片的文件路径，每一行保存一个标定图片的路径
 	ifstream fin(infilename);
 	ofstream fout(outfilename);
 
-	/*
-	读取每一幅图像，从中提取角点，然后对角点进行亚像素精细化，获取每个角点在像素坐标系中的坐标
-	*/
+	//读取每一幅图像，从中提取角点，然后对角点进行亚像素精细化，获取每个角点在像素坐标系中的坐标
 	cout << "开始提取角点.....\n"<< endl;
 	int imagecount = 0;//图像的数量
 	Size imagesize;//图像的尺寸

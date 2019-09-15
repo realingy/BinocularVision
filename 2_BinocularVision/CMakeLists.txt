@@ -5,7 +5,8 @@ project(BinocularVison)
 
 include_directories(${CMAKE_SOURCE_DIR}/..)
 
-add_subdirectory(test)
+add_subdirectory(0_test)
+add_subdirectory(1_DoubleCamera)
 
 
 

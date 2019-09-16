@@ -7,6 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR}/..)
 
 add_subdirectory(0_test)
 add_subdirectory(1_DoubleCamera)
+add_subdirectory(2_capture)
 
 
 

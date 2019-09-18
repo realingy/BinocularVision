@@ -1,10 +1,12 @@
 #if 1//运行前改成1
 
-#include<opencv2/opencv.hpp>
-#include<stdlib.h>
+#include <opencv2/opencv.hpp>
+#include <stdlib.h>
 
 using namespace cv;
 using namespace std;
+
+string path = "D:\\dir_git\\BinocularVision\\2_BinocularVision\\2_capture\\picture\\";
 
 void main()
 {
@@ -51,18 +53,19 @@ void main()
 			break;
 		}
 
-		static int i = 9;
+		//static int i = 9;
+		static int i = 0;
 		if (13 == char(c))
 		{
-			sprintf(buf, ".\\picture\\left_%d.png", i);  //保存左视图
+			sprintf(buf, (path+"left_%d.png").c_str(), i);  //保存左视图
 			cout << buf;
 			imwrite(buf, LeftImage);
 
-			sprintf(buf, ".\\picture\\right_%d.png", i);  //保存右视图
+			sprintf(buf, (path+"right_%d.png").c_str(), i);  //保存右视图
 			imwrite(buf, RightImage);
 
-			sprintf(buf, ".\\picture\\total_%d.png", i);  //保存整体图像
-			imwrite(buf, DoubleImage);
+			//sprintf(buf, (path+"total_%d.png").c_str(), i);  //保存整体图像
+			//imwrite(buf, DoubleImage);
 			i++;
 		}
 	}

@@ -1,3 +1,4 @@
+#if 0
 #define _CRT_SECURE_NO_WARNINGS
 #include <opencv2/opencv.hpp>
 #include <iostream>
@@ -67,3 +68,4 @@ int main()
 	cap.release();//สอทลืสิด
 	return 0;
 }
+#endif

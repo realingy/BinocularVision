@@ -1,4 +1,3 @@
-#if 1
 #include <opencv2/opencv.hpp>  
 #include <iostream>  
 
@@ -13,6 +12,7 @@ Mat Q;
 Mat xyz; //三维坐标
 Ptr<StereoBM> bm = StereoBM::create(16, 9);
 int blockSize = 0, uniquenessRatio = 0, numDisparities = 0;
+
 void stereo_match_sgbm(int, void*)  //SGBM匹配算法
 {
 	bm->setBlockSize(2 * blockSize + 5); //SAD窗口大小，5~21之间为宜
@@ -137,4 +137,3 @@ int main()
 	waitKey(0);
 }
 
-#endif

@@ -1,24 +1,27 @@
-#if 1 //运行前改成1
+#if 1
 #include <iostream>
+#include <stdio.h>
 #include <time.h>
 #include <string.h>
 #include <cv.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/calib3d.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/core.hpp>
+#include <opencv2\highgui.hpp>
+#include <opencv2\calib3d.hpp>
+#include <opencv2\imgproc.hpp>
+#include <opencv2\core.hpp>
 #include <stdlib.h>
 #include <Windows.h>
 
 //此处参数需要根据棋盘格个数修改    
 //例如 黑白棋盘格 宽（w）为10个棋盘格 那么 w 为 10 -1 = 9
-#define  w  9 //棋盘格宽的黑白交叉点个数
-#define  h  6 //棋盘格高的黑白交叉点个数
+#define  w  9      //棋盘格宽的黑白交叉点个数    
+#define  h  6      //棋盘格高的黑白交叉点个数    
 
-const  float chessboardSquareSize = 12.5f; //每个棋盘格方块的边长 单位 为 mm
+const  float chessboardSquareSize = 12.5f;  //每个棋盘格方块的边长 单位 为 mm
+
 
 using namespace std;
 using namespace cv;
+
 
 //从 xml 文件中读取图片存储路径 
 static bool readStringList(const string& filename, vector<string>& list)
@@ -37,15 +40,15 @@ static bool readStringList(const string& filename, vector<string>& list)
 }
 
 //记录棋盘格角点个数
-
 static void calcChessboardCorners(Size boardSize, float squareSize, vector<Point3f>& corners)
 {
 	corners.resize(0);
-	for (int i = 0; i < boardSize.height; i++)        //height和width位置不能颠倒
+	for (int i = 0; i < boardSize.height; i++) {       //height和width位置不能颠倒
 		for (int j = 0; j < boardSize.width; j++)
 		{
 			corners.push_back(Point3f(j * squareSize, i * squareSize, 0));
 		}
+	}
 }
 
 
@@ -53,12 +56,11 @@ bool calibrate(Mat& intrMat, Mat& distCoeffs, vector<vector<Point2f>>& imagePoin
 	vector<vector<Point3f>>& ObjectPoints, Size& imageSize, const int cameraId,
 	vector<string> imageList)
 {
-
 	double rms = 0;  //重投影误差
 
 	Size boardSize;
 	boardSize.width = w;
-	boardSize.height = h;
+	boardSize.height = h;  
 
 	vector<Point2f> pointBuf;
 	float squareSize = chessboardSquareSize;
@@ -68,12 +70,12 @@ bool calibrate(Mat& intrMat, Mat& distCoeffs, vector<vector<Point2f>>& imagePoin
 	bool ok = false;
 
 	int nImages = (int)imageList.size() / 2;
-	cout << "图片张数" << nImages;
+	cout <<"图片张数"<< nImages;
 	namedWindow("View", 1);
 
 	int nums = 0; //有效棋盘格图片张数
 
-	for (int i = 0; i < nImages; i++)
+	for (int i = 0; i< nImages; i++)
 	{
 		Mat view, viewGray;
 		view = imread(imageList[i * 2 + cameraId], 1); //读取图片
@@ -135,14 +137,12 @@ int main()
 	bool okread = readStringList(filename, imageList);
 	if (!okread || imageList.empty())
 	{
-		// cout << "can not open " << filename << " or the string list is empty" << endl;
-		cout << "打开" << filename << "文件错误或者字符串信息为空!" << endl;
+		cout << "can not open " << filename << " or the string list is empty" << endl;
 		return false;
 	}
 	if (imageList.size() % 2 != 0)
 	{
-		// cout << "Error: the image list contains odd (non-even) number of elements\n";
-		cout << "错误: 标定图像的数量必须是偶数!\n";
+		cout << "Error: the image list contains odd (non-even) number of elements\n";
 		return false;
 	}
 
@@ -213,7 +213,7 @@ int main()
 	Mat canLeft = canvas(Rect(0, 0, imageSize.width, imageSize.height));
 	Mat canRight = canvas(Rect(imageSize.width, 0, imageSize.width, imageSize.height));
 
-	viewLeft = imread(imageList[6], 1); //cameraIdFirst
+	viewLeft = imread(imageList[6], 1);//cameraIdFirst
 	viewRight = imread(imageList[7], 1); //cameraIdSec
 	viewLeft.copyTo(canLeft);
 	viewRight.copyTo(canRight);
@@ -251,13 +251,6 @@ int main()
 	imshow("校正后", canvas); //显示画绿线的校正前图像
 
 	waitKey(400000);//必须要加waitKey ，否则可能存在无法显示图像问题
-
-	//必须要加waitKey ，否则可能存在无法显示图像问题
-	/* 官方解释   http://masikkk.com/article/OpenCV-imshow-waitkey/
-	A common mistake for OpenCV newcomers is to call cv::imshow() in a loop through video frames,
-	without following up each draw with cv::waitKey(30).In this case, nothing appears on screen,
-	because highgui is never given time to process the draw requests from cv::imshow().
-	*/
 
 	return 0;
 }

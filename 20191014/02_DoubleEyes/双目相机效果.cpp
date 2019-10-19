@@ -3,14 +3,14 @@
 
 using namespace cv;
 
-void main()
+int main()
 {
 	VideoCapture cap;
-	cap.open(1); //打开摄像头
+	cap.open(0); //打开摄像头
 	if (!cap.isOpened()) //如果视频不能正常打开则返回
 	{
 		std::cout << "打开摄像头错误!\n";
-		return;
+		return -1;
 	}
 
 	waitKey(30);
@@ -39,5 +39,6 @@ void main()
 		}
 	}
 	cap.release();//释放资源
+	return 0;
 }
 

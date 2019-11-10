@@ -1,3 +1,4 @@
+//得到视差图
 #include <opencv2/opencv.hpp>  
 #include <iostream>  
 
@@ -131,7 +132,7 @@ int main()
 
 	stereo_match_sgbm(0, 0);   //--【需要调整参数的位置5】，本行调用sgbm算法
 
-	waitKey(400000);//必须要加waitKey ，否则可能存在无法显示图像问题
+	waitKey(0);//必须要加waitKey ，否则可能存在无法显示图像问题
 
 	// while (1);
 	waitKey(0);

@@ -1,4 +1,5 @@
 #if 1
+// 根据视差图像和相机标定参数，基于三角几何原理，得到点云结果。
 #define  _SCL_SECURE_NO_WARNINGS
 #include <opencv2/opencv.hpp>  
 #include <pcl/visualization/cloud_viewer.h>
@@ -95,7 +96,7 @@ Point origin;                                     //鼠标按下的起始点
 Rect selection;                                   //定义矩形选框
 bool selectObject = false;                        //是否选择对象
 
-//--描述：鼠标操作回调--------------------------------------------------
+//--描述：鼠标操作回调--
 static void onMouse(int event, int x, int y, int, void*)
 {
 	if (selectObject)

@@ -5,7 +5,7 @@
 #include <pcl/visualization/cloud_viewer.h>
 #include <pcl/io/io.h>  
 #include <pcl/io/pcd_io.h>  
-#include <iostream>  
+#include <iostream>
 
 using namespace pcl;
 using namespace std;

@@ -73,8 +73,10 @@ int main()
 	Rect validRoi[2];
 	Mat viewLeft, viewRight;
 
-	viewLeft = imread("F:\\opencv\\opencv_test\\opencv_test\\picture\\left_9.png", 1); //cameraIdLef  参数为相机采集的图像路径
-	viewRight = imread("F:\\opencv\\opencv_test\\opencv_test\\picture\\right_9.png", 1); //cameraIRight
+	//cameraIdLef  参数为相机采集的图像路径
+	viewLeft = imread("F:\\opencv\\opencv_test\\opencv_test\\picture\\left_9.png", 1);
+	//cameraIRight
+	viewRight = imread("F:\\opencv\\opencv_test\\opencv_test\\picture\\right_9.png", 1);
 
 	imshow("viewLeft", viewLeft);
 	waitKey(40);
@@ -115,26 +117,28 @@ int main()
 	imshow("remap_left", rectifyImageL);
 	imshow("remap_right", rectifyImageR);
 
-	//--显示结果-------------------------------------------------------------------------------------
+	//--显示结果-------------------------------------------------------------------
 	namedWindow("disparity", WINDOW_NORMAL);
 
-	//--创建SAD窗口 Trackbar-------------------------------------------------------------------------
+	//--创建SAD窗口 Trackbar-------------------------------------------------------
 	createTrackbar("BlockSize:\n", "disparity", &blockSize, 8, stereo_match_sgbm);
 
-	//--创建视差唯一性百分比窗口 Trackbar------------------------------------------------------------
+	//--创建视差唯一性百分比窗口 Trackbar------------------------------------------
 	createTrackbar("UniquenessRatio:\n", "disparity", &uniquenessRatio, 50, stereo_match_sgbm);
 
-	//--创建视差窗口 Trackbar------------------------------------------------------------------------
+	//--创建视差窗口 Trackbar------------------------------------------------------
 	createTrackbar("NumDisparities:\n", "disparity", &numDisparities, 16, stereo_match_sgbm);
 
-	//--鼠标响应函数setMouseCallback(窗口名称, 鼠标回调函数, 传给回调函数的参数，一般取0)------------
+	//--鼠标响应函数setMouseCallback(窗口名称, 鼠标回调函数, 传给回调函数的参数，一般取0)--
 	setMouseCallback("disparity", onMouse, 0);
 
-	stereo_match_sgbm(0, 0);   //--【需要调整参数的位置5】，本行调用sgbm算法
+	//--【需要调整参数的位置5】，本行调用sgbm算法
+	stereo_match_sgbm(0, 0);
 
-	waitKey(0);//必须要加waitKey ，否则可能存在无法显示图像问题
-
-	// while (1);
 	waitKey(0);
+
+	return 0;
 }
+
+
 

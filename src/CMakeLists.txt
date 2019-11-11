@@ -11,5 +11,6 @@ add_subdirectory(03_CaptureImages)
 add_subdirectory(04_Calibrate)
 add_subdirectory(05_DistanceMeasurement)
 add_subdirectory(06_PCLTest)
+add_subdirectory(07_StereoMatch)
 add_subdirectory(07_StereoBuild)
 

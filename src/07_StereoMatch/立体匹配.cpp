@@ -1,4 +1,4 @@
-//程序功能：立体匹配与测距,输出视差图
+//程序功能：立体匹配与测距,输出视差图(测距，即深度恢复)
 //视差图空洞填充、深度图获取
 //视差图保存并用MATLAB显示、图像融合、点云保存及显示
 
@@ -35,7 +35,7 @@ Point origin;                                     //鼠标按下的起始点
 Rect selection;                                   //定义矩形选框
 bool selectObject = false;                        //是否选择对象
 
-Ptr<StereoBM> bm = StereoBM::create(16, 9);
+Ptr<StereoBM> bm = StereoBM::create(16, 9);		  //opencv中自带的BM立体匹配接口
 
 
 //########--【以下双目的标定参数为：需要调整参数的位置2】--#############

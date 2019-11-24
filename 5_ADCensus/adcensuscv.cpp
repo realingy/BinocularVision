@@ -1,49 +1,6 @@
-/* ----------------------------------------------------------------------------
- * Robotics Laboratory, Westphalian University of Applied Science
- * ----------------------------------------------------------------------------
- * Project			: 	Stereo Vision Project
- * Revision			: 	1.0
- * Recent changes	: 	18.06.2014	 
- * ----------------------------------------------------------------------------
- * LOG:
- * ----------------------------------------------------------------------------
- * Developer		: 	Dennis Luensch 		(dennis.luensch@gmail.com)
-						Tom Marvin Liebelt	(fh@tom-liebelt.de)
-						Christian Blesing	(christian.blesing@gmail.com)
- * License 			: 	BSD 
- *
- * Copyright (c) 2014, Dennis LÃ¼nsch, Tom Marvin Liebelt, Christian Blesing
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * # Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * 
- * # Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * 
- * # Neither the name of the {organization} nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ------------------------------------------------------------------------- */
-
 #include "adcensuscv.h"
 
-ADCensusCV::ADCensusCV(const Mat &leftImage, const Mat &rightImage, Size censusWin, float lambdaAD, float lambdaCensus)
+ADCensusCV::ADCensusCV(const cv::Mat &leftImage, const cv::Mat &rightImage, cv::Size censusWin, float lambdaAD, float lambdaCensus)
 {
     this->leftImage = leftImage;
     this->rightImage = rightImage;
@@ -52,32 +9,38 @@ ADCensusCV::ADCensusCV(const Mat &leftImage, const Mat &rightImage, Size censusW
     this->lambdaCensus = lambdaCensus;
 }
 
-//è®¡ç®—rgbå›¾åƒçš„adè§†å·®
+// ¼ÆËãÍ¼ÏñµÄADÆ¥Åä´ú¼Û¼ÆËã
+// ÊäÈë£ºÄ¿±êµãÔÚ×óÓÒÍ¼ÏñÖĞµÄËÑË÷Î»ÖÃ
+// Êä³ö£ºÄ¿±êµãÔÚ×óÓÒÍ¼ÏñÖĞµÄÏàËÆ¶È£¬ÖµÔ½Ğ¡ÏàËÆ¶ÈÔ½¸ß£¬×÷ÎªÆ¥ÅäµãµÄ¿ÉÄÜĞÔ¾ÍÔ½¸ß
 float ADCensusCV::ad(int wL, int hL, int wR, int hR) const
 {
-    float dist = 0;	//åˆå§‹è§†å·®
-    const Vec3b &colorLP = leftImage.at<Vec3b>(hL, wL);
-    const Vec3b &colorRP = rightImage.at<Vec3b>(hR, wR);
+    float dist = 0;	//³õÊ¼ÊÓ²î
+    const cv::Vec3b &colorLP = leftImage.at<cv::Vec3b>(hL, wL);
+    const cv::Vec3b &colorRP = rightImage.at<cv::Vec3b>(hR, wR);
 
     for(uchar color = 0; color < 3; ++color)
     {
         dist += std::abs(colorLP[color] - colorRP[color]);
     }
-    return (dist / 3); //rgbä¸‰ä¸ªåˆ†é‡è§†å·®çš„å¹³å‡å€¼
+    return (dist / 3); //rgbÈı¸ö·ÖÁ¿ÊÓ²îµÄÆ½¾ùÖµ
 }
 
+// ¼ÆËãÍ¼ÏñµÄcensusÆ¥Åä´ú¼Û¼ÆËã
+// ÊäÈë£ºÄ¿±êµãÔÚ×óÓÒÍ¼ÏñÖĞµÄËÑË÷Î»ÖÃ
+// Êä³ö£ºÄ¿±êµãÔÚ×óÓÒÍ¼ÏñÖĞµÄÏàËÆ¶È£¬ÖµÔ½Ğ¡ÏàËÆ¶ÈÔ½¸ß£¬×÷ÎªÆ¥ÅäµãµÄ¿ÉÄÜĞÔ¾ÍÔ½¸ß
 float ADCensusCV::census(int wL, int hL, int wR, int hR) const
 {
     float dist = 0;
-    const Vec3b &colorRefL = leftImage.at<Vec3b>(hL, wL);
-    const Vec3b &colorRefR = rightImage.at<Vec3b>(hR, wR);
+    const cv::Vec3b &colorRefL = leftImage.at<cv::Vec3b>(hL, wL); //×óÍ¼Ä¿±êµãp
+    const cv::Vec3b &colorRefR = rightImage.at<cv::Vec3b>(hR, wR); //ÓÒÍ¼Ä¿±êµãp
 
+	//±éÀúcensus´°¿ÚÏñËØ£¬¹ÀËã´°¿ÚÄÚ¸÷¸öÎ»ÖÃÏñËØÏàËÆ¶È£¬Ïà¼Ó×÷ÎªÄ¿±êµãµÄÏàËÆ¶È
     for(int h = -censusWin.height / 2; h <= censusWin.height / 2; ++h)
     {
         for(int w = -censusWin.width / 2; w <= censusWin.width / 2; ++w)
         {
-            const Vec3b &colorLP = leftImage.at<Vec3b>(hL + h, wL + w);
-            const Vec3b &colorRP = rightImage.at<Vec3b>(hR + h, wR + w);
+            const cv::Vec3b &colorLP = leftImage.at<cv::Vec3b>(hL + h, wL + w);
+            const cv::Vec3b &colorRP = rightImage.at<cv::Vec3b>(hR + h, wR + w);
             for(uchar color = 0; color < 3; ++color)
             {
                 // bool diff = (colorLP[color] < colorRefL[color]) ^ (colorRP[color] < colorRefR[color]);
@@ -90,6 +53,9 @@ float ADCensusCV::census(int wL, int hL, int wR, int hR) const
     return dist;
 }
 
+// ADºÍCensusÆ¥Åä´ú¼Û½áºÏ
+// ÊäÈë£ºÄ¿±êµãÔÚ×óÓÒÍ¼ÏñÖĞµÄËÑË÷Î»ÖÃ
+// Êä³ö£ºÄ¿±êµãÔÚ×óÓÒÍ¼ÏñÖĞµÄÏàËÆ¶È£¬ÖµÔ½Ğ¡ÏàËÆ¶ÈÔ½¸ß£¬×÷ÎªÆ¥ÅäµãµÄ¿ÉÄÜĞÔ¾ÍÔ½¸ß
 float ADCensusCV::adCensus(int wL, int hL, int wR, int hR) const
 {
     float dist;
@@ -101,7 +67,8 @@ float ADCensusCV::adCensus(int wL, int hL, int wR, int hR) const
     float cCensus = census(wL, hL, wR, hR);
 
     // combine the two costs
-    dist = 1 - exp(-cAD / lambdaAD);
+	// ½«Á½ÖÖÆ¥Åä´ú¼Û½øĞĞ¹éÒ»»¯£¬²¢Ïà¼Ó
+    dist = 1 - exp(-cAD / lambdaAD); 
     dist += 1 - exp(-cCensus / lambdaCensus);
 
     return dist;

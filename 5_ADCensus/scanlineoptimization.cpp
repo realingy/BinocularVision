@@ -47,7 +47,7 @@
 
 using namespace std;
 
-ScanlineOptimization::ScanlineOptimization(const Mat &leftImage, const Mat &rightImage, int dMin, int dMax,
+ScanlineOptimization::ScanlineOptimization(const cv::Mat &leftImage, const cv::Mat &rightImage, int dMin, int dMax,
                                            uint colorThreshold, float pi1, float pi2)
 {
     this->images[0] = leftImage;
@@ -60,11 +60,11 @@ ScanlineOptimization::ScanlineOptimization(const Mat &leftImage, const Mat &righ
     this->pi2 = pi2;
 }
 
-void ScanlineOptimization::optimization(vector<Mat> *costMaps, bool rightFirst)
+void ScanlineOptimization::optimization(vector<cv::Mat> *costMaps, bool rightFirst)
 {
-//    vector<Mat> optimizedCosts(dMax - dMin + 1);
+//    vector<cv::Mat> optimizedCosts(dMax - dMin + 1);
 //    for(int d = 0; d < optimizedCosts.size(); d++)
-//        optimizedCosts[d] = Mat::zeros(imgSize, CV_32F);
+//        optimizedCosts[d] = cv::Mat::zeros(imgSize, CV_32F);
 
     // computes the 4 directionnal optimized costs
     // vertical downward
@@ -87,9 +87,9 @@ void ScanlineOptimization::optimization(vector<Mat> *costMaps, bool rightFirst)
 //        optimizedCosts[d].copyTo(optCostMaps[d]);
 }
 
-void ScanlineOptimization::verticalComputation(int height, int direction, vector<Mat> *costMaps, bool rightFirst)
+void ScanlineOptimization::verticalComputation(int height, int direction, vector<cv::Mat> *costMaps, bool rightFirst)
 {
-//    vector<Mat> tempCosts(dMax - dMin + 1);
+//    vector<cv::Mat> tempCosts(dMax - dMin + 1);
 
 //    // initialize vertical optimized costs
 //    for(int disparity = 0; disparity < tempCosts.size(); disparity++)
@@ -123,7 +123,7 @@ void ScanlineOptimization::verticalComputation(int height, int direction, vector
 //    }
 }
 
-void ScanlineOptimization::verticalOptimization(int height1, int height2, vector<Mat> *costMaps, bool rightFirst)
+void ScanlineOptimization::verticalOptimization(int height1, int height2, vector<cv::Mat> *costMaps, bool rightFirst)
 {
     for(size_t width = 0; width < imgSize.width; width++)
     {
@@ -131,9 +131,9 @@ void ScanlineOptimization::verticalOptimization(int height1, int height2, vector
     }
 }
 
-void ScanlineOptimization::horizontalComputation(int width, int direction, vector<Mat> *costMaps, bool rightFirst)
+void ScanlineOptimization::horizontalComputation(int width, int direction, vector<cv::Mat> *costMaps, bool rightFirst)
 {
-//    vector<Mat> tempCosts(dMax - dMin + 1);
+//    vector<cv::Mat> tempCosts(dMax - dMin + 1);
 
 //    // initialize horizontal optimized costs
 //    for(int disparity = 0; disparity < tempCosts.size(); disparity++)
@@ -167,7 +167,7 @@ void ScanlineOptimization::horizontalComputation(int width, int direction, vecto
 //    }
 }
 
-void ScanlineOptimization::horizontalOptimization(int width1, int width2, vector<Mat> *costMaps, bool rightFirst)
+void ScanlineOptimization::horizontalOptimization(int width1, int width2, vector<cv::Mat> *costMaps, bool rightFirst)
 {
     for(size_t height = 0; height < imgSize.height; height++)
     {
@@ -175,7 +175,7 @@ void ScanlineOptimization::horizontalOptimization(int width1, int width2, vector
     }
 }
 
-void ScanlineOptimization::partialOptimization(int height1, int height2, int width1, int width2, vector<Mat> *costMaps, bool rightFirst)
+void ScanlineOptimization::partialOptimization(int height1, int height2, int width1, int width2, vector<cv::Mat> *costMaps, bool rightFirst)
 {
     float minOptCost = costMaps->at(0).at<costType>(height2, width2) / (float)COST_FACTOR;
 
@@ -236,14 +236,14 @@ void ScanlineOptimization::computeP1P2(int height1, int height2, int width1, int
     }
 
     // compute color differences between pixels in the two pictures
-    int d1 = colorDiff(images[imageNo].at<Vec3b>(height1, width1), images[imageNo].at<Vec3b>(height2, width2));
+    int d1 = colorDiff(images[imageNo].at<cv::Vec3b>(height1, width1), images[imageNo].at<cv::Vec3b>(height2, width2));
     int d2 = colorDifference + 1;
 
     if(0 <= width1 + disparity && width1 + disparity < imgSize.width
        && 0 <= width2 + disparity && width2 + disparity < imgSize.width)
     {
-        d2 = colorDiff(images[otherImgNo].at<Vec3b>(height1, width1 + disparity),
-                       images[otherImgNo].at<Vec3b>(height2, width2 + disparity));
+        d2 = colorDiff(images[otherImgNo].at<cv::Vec3b>(height1, width1 + disparity),
+                       images[otherImgNo].at<cv::Vec3b>(height2, width2 + disparity));
     }
 
     // depending on the color differences computed previously, find the so parameters
@@ -275,7 +275,7 @@ void ScanlineOptimization::computeP1P2(int height1, int height2, int width1, int
     }
 }
 
-int ScanlineOptimization::colorDiff(const Vec3b &p1, const Vec3b &p2) const
+int ScanlineOptimization::colorDiff(const cv::Vec3b &p1, const cv::Vec3b &p2) const
 {
     int colorDiff, diff = 0;
 

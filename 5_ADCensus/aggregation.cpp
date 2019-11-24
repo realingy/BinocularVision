@@ -1,50 +1,7 @@
-/* ----------------------------------------------------------------------------
- * Robotics Laboratory, Westphalian University of Applied Science
- * ----------------------------------------------------------------------------
- * Project			: 	Stereo Vision Project
- * Revision			: 	1.0
- * Recent changes	: 	18.06.2014	 
- * ----------------------------------------------------------------------------
- * LOG:
- * ----------------------------------------------------------------------------
- * Developer		: 	Dennis Luensch 		(dennis.luensch@gmail.com)
-						Tom Marvin Liebelt	(fh@tom-liebelt.de)
-						Christian Blesing	(christian.blesing@gmail.com)
- * License 			: 	BSD 
- *
- * Copyright (c) 2014, Dennis Lünsch, Tom Marvin Liebelt, Christian Blesing
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * # Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * 
- * # Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * 
- * # Neither the name of the {organization} nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ------------------------------------------------------------------------- */
-
 #include "aggregation.h"
 using namespace std;
 
-Aggregation::Aggregation(const Mat &leftImage, const Mat &rightImage, uint colorThreshold1, uint colorThreshold2,
+Aggregation::Aggregation(const cv::Mat &leftImage, const cv::Mat &rightImage, uint colorThreshold1, uint colorThreshold2,
                          uint maxLength1, uint maxLength2)
 {
     this->images[0] = leftImage;
@@ -68,7 +25,7 @@ Aggregation::Aggregation(const Mat &leftImage, const Mat &rightImage, uint color
     }
 }
 
-int Aggregation::colorDiff(const Vec3b &p1, const Vec3b &p2)
+int Aggregation::colorDiff(const cv::Vec3b &p1, const cv::Vec3b &p2)
 {
     int colorDiff, diff = 0;
 
@@ -84,7 +41,7 @@ int Aggregation::colorDiff(const Vec3b &p1, const Vec3b &p2)
 int Aggregation::computeLimit(int height, int width, int directionH, int directionW, uchar imageNo)
 {
     // reference pixel
-    Vec3b p = images[imageNo].at<Vec3b>(height, width);
+    cv::Vec3b p = images[imageNo].at<cv::Vec3b>(height, width);
 
     // coordinate of p1 the border patch pixel candidate
     int d = 1;
@@ -92,7 +49,7 @@ int Aggregation::computeLimit(int height, int width, int directionH, int directi
     int w1 = width + directionW;
 
     // pixel value of p1 predecessor
-    Vec3b p2 = p;
+    cv::Vec3b p2 = p;
 
     // test if p1 is still inside the picture
     bool inside = (0 <= h1) && (h1 < imgSize.height) && (0 <= w1) && (w1 < imgSize.width);
@@ -103,7 +60,7 @@ int Aggregation::computeLimit(int height, int width, int directionH, int directi
 
         while(colorCond && wLimitCond && fColorCond && inside)
         {
-            Vec3b p1 = images[imageNo].at<Vec3b>(h1, w1);
+            cv::Vec3b p1 = images[imageNo].at<cv::Vec3b>(h1, w1);
 
             // Do p1, p2 and p have similar color intensities?
             colorCond = colorDiff(p, p1) < colorThreshold1 && colorDiff(p1, p2) < colorThreshold1;
@@ -130,9 +87,9 @@ int Aggregation::computeLimit(int height, int width, int directionH, int directi
     return d - 1;
 }
 
-Mat Aggregation::computeLimits(int directionH, int directionW, int imageNo)
+cv::Mat Aggregation::computeLimits(int directionH, int directionW, int imageNo)
 {
-    Mat limits(imgSize, CV_32S);
+    cv::Mat limits(imgSize, CV_32S);
     int h, w;
     #pragma omp parallel default (shared) private(w, h) num_threads(omp_get_max_threads())
     #pragma omp for schedule(static)
@@ -147,10 +104,10 @@ Mat Aggregation::computeLimits(int directionH, int directionW, int imageNo)
     return limits;
 }
 
-Mat Aggregation::aggregation1D(const Mat &costMap, int directionH, int directionW, Mat &windowSizes, uchar imageNo)
+cv::Mat Aggregation::aggregation1D(const cv::Mat &costMap, int directionH, int directionW, cv::Mat &windowSizes, uchar imageNo)
 {
-    Mat tmpWindowSizes = Mat::zeros(imgSize, CV_32S);
-    Mat aggregatedCosts(imgSize, CV_32F);
+    cv::Mat tmpWindowSizes = cv::Mat::zeros(imgSize, CV_32S);
+    cv::Mat aggregatedCosts(imgSize, CV_32F);
     int dmin, dmax, d;
     int h, w;
 
@@ -186,14 +143,14 @@ Mat Aggregation::aggregation1D(const Mat &costMap, int directionH, int direction
     return aggregatedCosts;
 }
 
-void Aggregation::aggregation2D(Mat &costMap, bool horizontalFirst, uchar imageNo)
+void Aggregation::aggregation2D(cv::Mat &costMap, bool horizontalFirst, uchar imageNo)
 {
     int directionH = 1, directionW = 0;
 
     if (horizontalFirst)
         std::swap(directionH, directionW);
 
-    Mat windowsSizes = Mat::ones(imgSize, CV_32S);
+    cv::Mat windowsSizes = cv::Mat::ones(imgSize, CV_32S);
 
     for(uchar direction = 0; direction < 2; direction++)
     {
@@ -211,8 +168,8 @@ void Aggregation::aggregation2D(Mat &costMap, bool horizontalFirst, uchar imageN
 
 }
 
-void Aggregation::getLimits(vector<Mat> &upLimits, vector<Mat> &downLimits,
-                            vector<Mat> &leftLimits, vector<Mat> &rightLimits) const
+void Aggregation::getLimits(vector<cv::Mat> &upLimits, vector<cv::Mat> &downLimits,
+                            vector<cv::Mat> &leftLimits, vector<cv::Mat> &rightLimits) const
 {
     upLimits = this->upLimits;
     downLimits = this->downLimits;

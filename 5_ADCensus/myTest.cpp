@@ -1,47 +1,3 @@
-
-/* ----------------------------------------------------------------------------
- * Robotics Laboratory, Westphalian University of Applied Science
- * ----------------------------------------------------------------------------
- * Project			: 	Stereo Vision Project
- * Revision			: 	1.0
- * Recent changes	: 	18.06.2014	 
- * ----------------------------------------------------------------------------
- * LOG:
- * ----------------------------------------------------------------------------
- * Developer		: 	Dennis Luensch 		(dennis.luensch@gmail.com)
-						Tom Marvin Liebelt	(fh@tom-liebelt.de)
-						Christian Blesing	(christian.blesing@gmail.com)
- * License 			: 	BSD 
- *
- * Copyright (c) 2014, Dennis L¨¹nsch, Tom Marvin Liebelt, Christian Blesing
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * # Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * 
- * # Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * 
- * # Neither the name of the {organization} nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ------------------------------------------------------------------------- */
-
 #include <iostream>
 #include <opencv2/core/core.hpp>  
 #include "stereoprocessor.h"
@@ -56,13 +12,13 @@
 #include <pcl/io/pcd_io.h>
 
 using namespace std;
-using namespace cv;
+// using namespace cv;
 
 bool loadImageList(string file, vector<string> &list)
 {
     bool loadSuccess = false;
-    FileNode fNode;
-    FileStorage fStorage(file, FileStorage::READ);
+    cv::FileNode fNode;
+    cv::FileStorage fStorage(file, cv::FileStorage::READ);
 	 if (!fStorage.isOpened())
     {
         cout << "Could not open the configuration file: \"" << file << "\"" << endl;
@@ -72,9 +28,9 @@ bool loadImageList(string file, vector<string> &list)
     {
         fNode = fStorage.getFirstTopLevelNode();
 
-        if (fNode.type() == FileNode::SEQ)
+        if (fNode.type() == cv::FileNode::SEQ)
         {
-            for(FileNodeIterator iterator = fNode.begin(); iterator != fNode.end(); ++iterator)
+            for(cv::FileNodeIterator iterator = fNode.begin(); iterator != fNode.end(); ++iterator)
             {
                 list.push_back((string) *iterator);
             }
@@ -86,12 +42,12 @@ bool loadImageList(string file, vector<string> &list)
     return loadSuccess;
 }
 
-bool loadImages(vector<string> fileList, vector<Mat> &images)
+bool loadImages(vector<string> fileList, vector<cv::Mat> &images)
 {
     bool emptyImage = false;
     for (int i = 0; i < fileList.size() && !emptyImage; ++i)
     {
-        Mat curImg = imread(fileList[i]);
+        cv::Mat curImg = cv::imread(fileList[i]);
         if (!curImg.empty())
         {
             images.push_back(curImg);
@@ -105,18 +61,18 @@ bool loadImages(vector<string> fileList, vector<Mat> &images)
     return (!emptyImage && images.size() > 0);
 }
 
-bool loadQMatrix(string file, Mat &Q)
+bool loadQMatrix(string file, cv::Mat &Q)
 {
     bool success = false;
     try
     {
-        FileStorage fStorage;
-		fStorage.open(file, FileStorage::READ);
+        cv::FileStorage fStorage;
+		fStorage.open(file, cv::FileStorage::READ);
         fStorage["Q"] >> Q;
         fStorage.release();
         success = true;
     }
-    catch(Exception ex)
+    catch(cv::Exception ex)
     {
     }
 
@@ -124,7 +80,7 @@ bool loadQMatrix(string file, Mat &Q)
 }
 
 /*
-void createAndSavePointCloud(Mat &disparity, Mat &leftImage, Mat &Q, string filename)
+void createAndSavePointCloud(cv::Mat &disparity, cv::Mat &leftImage, cv::Mat &Q, string filename)
 {
     pcl::PointCloud<pcl::PointXYZRGB> pointCloud;
 
@@ -147,7 +103,7 @@ void createAndSavePointCloud(Mat &disparity, Mat &leftImage, Mat &Q, string file
             if ( d <= 0 ) continue; //Discard bad pixels
 
             // Read color
-            Vec3b colorValue = leftImage.at<Vec3b>(i, j);
+            cv::Vec3b colorValue = leftImage.at<cv::Vec3b>(i, j);
             point.r = static_cast<int>(colorValue[2]);
             point.g = static_cast<int>(colorValue[1]);
             point.b = static_cast<int>(colorValue[0]);
@@ -181,7 +137,7 @@ int main(int argc, char *argv[])
     bool success = false;
 
     string xmlImages, ymlExtrinsic;
-    uint dMin; uint dMax; Size censusWin; float defaultBorderCost;
+    uint dMin; uint dMax; cv::Size censusWin; float defaultBorderCost;
     float lambdaAD; float lambdaCensus; string savePath; uint aggregatingIterations;
     uint colorThreshold1; uint colorThreshold2; uint maxLength1; uint maxLength2; uint colorDifference;
     float pi1; float pi2; uint dispTolerance; uint votingThreshold; float votingRatioThreshold;
@@ -223,8 +179,8 @@ int main(int argc, char *argv[])
         if(readSuccessfully)
         {
             vector<string> fileList;
-            vector<Mat> images;
-            Mat Q(4, 4, CV_64F);
+            vector<cv::Mat> images;
+            cv::Mat Q(4, 4, CV_64F);
 
             boost::filesystem::path dir(savePath);
             boost::filesystem::create_directories(dir);
@@ -250,7 +206,7 @@ int main(int argc, char *argv[])
                             boost::posix_time::time_duration diff;
 
                             ImageProcessor iP(0.1);
-                            Mat eLeft, eRight;
+                            cv::Mat eLeft, eRight;
                             eLeft = iP.unsharpMasking(images[i * 2], "gauss", 3, 1.9, -1);
                             eRight = iP.unsharpMasking(images[i * 2 + 1], "gauss", 3, 1.9, -1);
 
@@ -266,11 +222,11 @@ int main(int argc, char *argv[])
                                 success = true;
                                 if(gotExtrinsic)
                                 {
-                                    Mat disp = sP.getDisparity();
+                                    cv::Mat disp = sP.getDisparity();
 
                                     string dispFile = file.str();
                                     dispFile += "_disp.yml";
-                                    FileStorage fs(dispFile, FileStorage::WRITE);
+                                    cv::FileStorage fs(dispFile, cv::FileStorage::WRITE);
                                     fs << "disp" << disp;
                                     fs.release();
 

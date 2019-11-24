@@ -1,46 +1,3 @@
-/* ----------------------------------------------------------------------------
- * Robotics Laboratory, Westphalian University of Applied Science
- * ----------------------------------------------------------------------------
- * Project			: 	Stereo Vision Project
- * Revision			: 	1.0
- * Recent changes	: 	18.06.2014	 
- * ----------------------------------------------------------------------------
- * LOG:
- * ----------------------------------------------------------------------------
- * Developer		: 	Dennis Luensch 		(dennis.luensch@gmail.com)
-						Tom Marvin Liebelt	(fh@tom-liebelt.de)
-						Christian Blesing	(christian.blesing@gmail.com)
- * License 			: 	BSD 
- *
- * Copyright (c) 2014, Dennis LÃ¼nsch, Tom Marvin Liebelt, Christian Blesing
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * # Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * 
- * # Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * 
- * # Neither the name of the {organization} nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ------------------------------------------------------------------------- */
-
 #include "imageprocessor.h"
 #include <limits>
 
@@ -49,18 +6,22 @@ ImageProcessor::ImageProcessor(float percentageOfDeletion)
     this->percentageOfDeletion = percentageOfDeletion;
 }
 
-Mat ImageProcessor::stretchHistogram(Mat image)
+// Ö±·½Í¼À­Éì
+// ÊäÈë£ºÍ¼Ïñ
+// Êä³ö£º
+cv::Mat ImageProcessor::stretchHistogram(cv::Mat image)
 {
-    Size imgSize = image.size();
-    std::vector<Mat> channels;
-    Mat output(imgSize, CV_8UC3);
-    uint pixelThres = percentageOfDeletion * imgSize.height * imgSize.width;
-    std::vector<uint> hist;
-    hist.resize(std::numeric_limits<uchar>::max() + 1);
-
+    cv::Size imgSize = image.size();
+    std::vector<cv::Mat> channels;
+    cv::Mat output(imgSize, CV_8UC3);
 
     cvtColor(image, output, CV_BGR2YCrCb); //change the color image from BGR to YCrCb format
     split(output, channels); //split the image into channels
+
+	// ÏñËØãÐÖµ£ºÉ¾³ý±È*Í¼Ïñ³ß´ç
+    uint pixelThres = percentageOfDeletion * imgSize.height * imgSize.width;
+    std::vector<uint> hist;
+    hist.resize(std::numeric_limits<uchar>::max() + 1);
 
     uchar min = std::numeric_limits<uchar>::max();
     uchar max = 0;
@@ -127,9 +88,9 @@ Mat ImageProcessor::stretchHistogram(Mat image)
     return output;
 }
 
-Mat ImageProcessor::unsharpMasking(Mat image, std::string blurMethod, int kernelSize, float alpha, float beta)
+cv::Mat ImageProcessor::unsharpMasking(cv::Mat image, std::string blurMethod, int kernelSize, float alpha, float beta)
 {
-    Mat tempImage, output;
+    cv::Mat tempImage, output;
     float gamma = 0.0;
     float gaussianDevX = 0.0;
     float gaussianDevY = 0.0;
@@ -148,14 +109,14 @@ Mat ImageProcessor::unsharpMasking(Mat image, std::string blurMethod, int kernel
     return output;
 }
 
-Mat ImageProcessor::laplacianSharpening(Mat image, int kernelSize, float alpha, float beta)
+cv::Mat ImageProcessor::laplacianSharpening(cv::Mat image, int kernelSize, float alpha, float beta)
 {
-    Mat laplacianRes, abs_dst, output;
+    cv::Mat laplacianRes, abs_dst, output;
     int scale = 0;
     int delta = 0;
     float gamma = 0.0;
 
-    Laplacian(image, laplacianRes, CV_8UC3, kernelSize, scale, delta, BORDER_DEFAULT);
+    Laplacian(image, laplacianRes, CV_8UC3, kernelSize, scale, delta, cv::BORDER_DEFAULT);
     convertScaleAbs(laplacianRes, abs_dst);
     addWeighted(image, alpha, abs_dst, beta, gamma, output);
 

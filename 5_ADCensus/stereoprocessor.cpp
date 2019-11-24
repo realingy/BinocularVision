@@ -1,52 +1,39 @@
-/* ----------------------------------------------------------------------------
- * Robotics Laboratory, Westphalian University of Applied Science
- * ----------------------------------------------------------------------------
- * Project			: 	Stereo Vision Project
- * Revision			: 	1.0
- * Recent changes	: 	18.06.2014	 
- * ----------------------------------------------------------------------------
- * LOG:
- * ----------------------------------------------------------------------------
- * Developer		: 	Dennis Luensch 		(dennis.luensch@gmail.com)
-						Tom Marvin Liebelt	(fh@tom-liebelt.de)
-						Christian Blesing	(christian.blesing@gmail.com)
- * License 			: 	BSD 
- *
- * Copyright (c) 2014, Dennis L眉nsch, Tom Marvin Liebelt, Christian Blesing
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * # Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * 
- * # Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * 
- * # Neither the name of the {organization} nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ------------------------------------------------------------------------- */
-
 #include "stereoprocessor.h"
 #include <limits>
 
 #define DEBUG
 
-StereoProcessor::StereoProcessor(uint dMin, uint dMax, Mat leftImage, Mat rightImage, Size censusWin, float defaultBorderCost,
+/*********************************************************************
+立体匹配处理类构造函数
+    this->dMin = dMin	—	最小视差 uint
+    this->dMax = dMax	—	最大视差 uint
+    this->images[0] = leftImage	— 左图像 cv::Mat
+    this->images[1] = rightImage — 右图像 cv::Mat
+    this->censusWin = censusWin — Census窗口尺寸 cv::Size
+    this->defaultBorderCost = defaultBorderCost 默认边匹配代价
+    this->lambdaAD = lambdaAD AD占比
+    this->lambdaCensus = lambdaCensus Census占比
+    this->savePath = savePath 保存路径
+    this->aggregatingIterations = aggregatingIterations 聚类迭代次数
+    this->colorThreshold1 = colorThreshold1 颜色阈值1
+    this->colorThreshold2 = colorThreshold2 颜色阈值2
+    this->maxLength1 = maxLength1 //最大长度1
+    this->maxLength2 = maxLength2 //最大长度2
+    this->colorDifference = colorDifference 颜色差值
+    this->pi1 = pi1 float
+    this->pi2 = pi2 float
+    this->dispTolerance = dispTolerance 视差容忍
+    this->votingThreshold = votingThreshold 投票阈值
+    this->votingRatioThreshold = votingRatioThreshold 投票率阈值
+    this->maxSearchDepth = maxSearchDepth 最大搜索深度
+    this->blurKernelSize = blurKernelSize 滤波核尺寸
+    this->cannyThreshold1 = cannyThreshold1 canny阈值1
+    this->cannyThreshold2 = cannyThreshold2 canny阈值2
+    this->cannyKernelSize = cannyKernelSize canny核尺寸
+    this->validParams = false 参数有效
+    this->dispComputed = false 视差计算
+*********************************************************************/
+StereoProcessor::StereoProcessor(uint dMin, uint dMax, cv::Mat leftImage, cv::Mat rightImage, cv::Size censusWin, float defaultBorderCost,
                                  float lambdaAD, float lambdaCensus, string savePath, uint aggregatingIterations,
                                  uint colorThreshold1, uint colorThreshold2, uint maxLength1, uint maxLength2, uint colorDifference,
                                  float pi1, float pi2, uint dispTolerance, uint votingThreshold, float votingRatioThreshold,
@@ -88,17 +75,24 @@ StereoProcessor::~StereoProcessor()
     delete dispRef;
 }
 
+/*****************************************************************
+初始化
+输出：参数是否正确
+*****************************************************************/
 bool StereoProcessor::init(string &error)
 {
     bool valid = true;
 
-    valid &= dMin < dMax;
+    valid &= dMin < dMax; //最小视差小于最大视差
 
+	// 左右图像尺寸相同，height必须大于2
     valid &= images[0].size().height == images[1].size().height && images[0].size().width == images[1].size().width
                    && images[0].size().height > 2 && images[0].size().width > 2;
 
+	// census窗口大于2*2，必须是奇数
     valid &= censusWin.height > 2 && censusWin.width > 2 && censusWin.height % 2 != 0 && censusWin.width % 2 != 0;
 
+	// 默认边长代价大于0，小于1，AD-Census两个权重大于0，聚合迭代次数大于0
     valid &= defaultBorderCost >= 0 && defaultBorderCost < 1 && lambdaAD >= 0 && lambdaCensus >= 0 && aggregatingIterations > 0;
 
     valid &= colorThreshold1 > colorThreshold2 && colorThreshold2 > 0;
@@ -165,47 +159,50 @@ bool StereoProcessor::init(string &error)
                                           blurKernelSize, cannyThreshold1, cannyThreshold2, cannyKernelSize);
     }
 
-    validParams = valid;
+    validParams = valid; //参数是否正确
     return valid;
 }
 
+// 计算
 bool StereoProcessor::compute()
 {
     if(validParams)
     {
-        costInitialization();
-        costAggregation();
-        scanlineOptimization();
-        outlierElimination();
-        regionVoting();
-        properInterpolation();
-        discontinuityAdjustment();
-        subpixelEnhancement();
+        costInitialization(); //匹配代价初始化
+        costAggregation(); //匹配代价聚类
+        scanlineOptimization(); //扫描线优化
+        outlierElimination(); //异常点去除视差图校正
+        regionVoting(); //区域投票法校正
+        properInterpolation(); //
+        discontinuityAdjustment(); //
+        subpixelEnhancement(); //亚像素增强法视差图校正
         dispComputed = true;
     }
 
     return validParams;
 }
 
-Mat StereoProcessor::getDisparity()
+// 获取视差图
+cv::Mat StereoProcessor::getDisparity()
 {
-    return (dispComputed)? floatDisparityMap: Mat();
+    return (dispComputed)? floatDisparityMap: cv::Mat();
 }
 
+// 匹配代价初始化
 void StereoProcessor::costInitialization()
 {
-    Size halfCensusWin(censusWin.width / 2, censusWin.height / 2);
+    cv::Size halfCensusWin(censusWin.width / 2, censusWin.height / 2);
     bool out;
     int d, h, w, wL, wR;
-    size_t imageNo;
+    size_t imageNo; //图像数量
 
     cout << "[StereoProcessor] started cost initialization!" << endl;
-
 
     for(imageNo = 0; imageNo < 2; ++imageNo)
     {
         #pragma omp parallel default (shared) private(d, h, w, wL, wR, out) num_threads(omp_get_max_threads())
         #pragma omp for schedule(static)
+		// 深度搜索范围
         for(d = 0; d <= dMax - dMin; d++)
         {
             for(h = 0; h < imgSize.height; h++)
@@ -215,15 +212,18 @@ void StereoProcessor::costInitialization()
                     wL = w;
                     wR = w;
 
+					//图像搜索区域，左右图像x轴点
                     if(imageNo == 0)
                         wR = w - d;
                     else
                         wL = w + d;
 
+					//census窗口尺寸必须小于图像尺寸，census窗口必须在图像内部进行搜索
                     out = wL - halfCensusWin.width < 0 || wL + halfCensusWin.width >= imgSize.width
                            || wR - halfCensusWin.width < 0 || wR + halfCensusWin.width >= imgSize.width
                            || h - halfCensusWin.height < 0 || h + halfCensusWin.height >= imgSize.height;
 
+					// 匹配代价图的目标点位置值
                     costMaps[imageNo][d].at<costType>(h, w) = out
                                                             ? defaultBorderCost * COST_FACTOR
                                                             : adCensus->adCensus(wL, h, wR, h) / 2 * COST_FACTOR;
@@ -235,7 +235,8 @@ void StereoProcessor::costInitialization()
     }
 
 #ifdef DEBUG
-    Mat disp = cost2disparity(0);
+	// 计算以左右图像为参考得到的视差图
+    cv::Mat disp = cost2disparity(0);
     saveDisparity<int>(disp, "01_dispLR.png");
 
     disp = cost2disparity(1);
@@ -246,6 +247,7 @@ void StereoProcessor::costInitialization()
 
 }
 
+//代价聚合
 void StereoProcessor::costAggregation()
 {
     size_t imageNo, i;
@@ -258,9 +260,10 @@ void StereoProcessor::costAggregation()
 #if COST_TYPE_NOT_FLOAT
         #pragma omp parallel default (shared) private(d, i) num_threads(omp_get_max_threads())
         #pragma omp for schedule(static)
+		// 深度搜索范围
         for(d = 0; d <= dMax - dMin; d++)
         {
-            Mat currCostMap(imgSize, CV_32F);
+            cv::Mat currCostMap(imgSize, CV_32F);
 
             for(int h = 0; h < imgSize.height; h++)
             {
@@ -303,7 +306,7 @@ void StereoProcessor::costAggregation()
     }
 
 #ifdef DEBUG
-    Mat disp = cost2disparity(0);
+    cv::Mat disp = cost2disparity(0);
     saveDisparity<int>(disp, "02_dispLR_agg.png");
 
     disp = cost2disparity(1);
@@ -328,7 +331,7 @@ void StereoProcessor::scanlineOptimization()
     }
 
 #ifdef DEBUG
-    Mat disp = cost2disparity(0);
+    cv::Mat disp = cost2disparity(0);
     saveDisparity<int>(disp, "03_dispLR_so.png");
 
     disp = cost2disparity(1);
@@ -342,8 +345,8 @@ void StereoProcessor::outlierElimination()
 {
     cout << "[StereoProcessor] started outlier elimination!" << endl;
 
-    Mat disp0 = cost2disparity(0);
-    Mat disp1 = cost2disparity(1);
+    cv::Mat disp0 = cost2disparity(0);
+    cv::Mat disp1 = cost2disparity(1);
 
     disparityMap = dispRef->outlierElimination(disp0, disp1);
 
@@ -356,7 +359,7 @@ void StereoProcessor::outlierElimination()
 
 void StereoProcessor::regionVoting()
 {
-    vector<Mat> upLimits, downLimits, leftLimits, rightLimits;
+    vector<cv::Mat> upLimits, downLimits, leftLimits, rightLimits;
 
     cout << "[StereoProcessor] started region voting!" << endl;
 
@@ -413,10 +416,13 @@ void StereoProcessor::subpixelEnhancement()
     cout << "[StereoProcessor] finished subpixel enhancement!" << endl;
 }
 
-Mat StereoProcessor::cost2disparity(int imageNo)
+// 匹配代价图像到视差的转换
+// 输入：图像序号 0：左图 1：右图
+// 输出：视差图
+cv::Mat StereoProcessor::cost2disparity(int imageNo)
 {
-    Mat disp(imgSize, CV_32S);
-    Mat lowCost(imgSize, COST_MAP_TYPE, Scalar(std::numeric_limits<costType>::max()));
+    cv::Mat disp(imgSize, CV_32S);
+    cv::Mat lowCost(imgSize, COST_MAP_TYPE, cv::Scalar(std::numeric_limits<costType>::max()));
 
     for(int d = 0; d <= dMax - dMin; d++)
     {
@@ -437,10 +443,10 @@ Mat StereoProcessor::cost2disparity(int imageNo)
 }
 
 template <typename T>
-void StereoProcessor::saveDisparity(const Mat &disp, string filename, bool stretch)
+void StereoProcessor::saveDisparity(const cv::Mat &disp, string filename, bool stretch)
 {
-    Mat output(imgSize, CV_8UC3);
-    String path(savePath);
+    cv::Mat output(imgSize, CV_8UC3);
+    cv::String path(savePath);
     T min, max;
 
     if(stretch)
@@ -465,7 +471,7 @@ void StereoProcessor::saveDisparity(const Mat &disp, string filename, bool stret
     {
         for(size_t w = 0; w < imgSize.width; w++)
         {
-            Vec3b color;
+            cv::Vec3b color;
             T disparity = disp.at<T>(h, w);
 
             if (disparity >= dMin)
@@ -491,7 +497,7 @@ void StereoProcessor::saveDisparity(const Mat &disp, string filename, bool stret
                 color[2] = 255;
             }
 
-            output.at<Vec3b>(h, w) = color;
+            output.at<cv::Vec3b>(h, w) = color;
         }
     }
 

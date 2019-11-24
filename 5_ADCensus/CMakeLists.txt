@@ -39,7 +39,7 @@ include_directories(${OpenCV_DIR}/install/include/opencv2)
 aux_source_directory(. DIR_SRCS)
 
 # 查找头文件
-file(GLOB HEADER ./*.h)
+file(GLOB HEADER ./*.h ./*.h++)
 
 set(EXE_NAME StereoMatchADCensus)
 add_executable(${EXE_NAME} ${DIR_SRCS} ${HEADER})

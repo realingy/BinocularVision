@@ -1,51 +1,21 @@
-/* ----------------------------------------------------------------------------
- * Robotics Laboratory, Westphalian University of Applied Science
- * ----------------------------------------------------------------------------
- * Project			: 	Stereo Vision Project
- * Revision			: 	1.0
- * Recent changes	: 	18.06.2014	 
- * ----------------------------------------------------------------------------
- * LOG:
- * ----------------------------------------------------------------------------
- * Developer		: 	Dennis Luensch 		(dennis.luensch@gmail.com)
-						Tom Marvin Liebelt	(fh@tom-liebelt.de)
-						Christian Blesing	(christian.blesing@gmail.com)
- * License 			: 	BSD 
- *
- * Copyright (c) 2014, Dennis L眉nsch, Tom Marvin Liebelt, Christian Blesing
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- * 
- * # Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- * 
- * # Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- * 
- * # Neither the name of the {organization} nor the names of its
- *   contributors may be used to endorse or promote products derived from
- *   this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * ------------------------------------------------------------------------- */
-
 #include "disparityrefinement.h"
 
-const int DisparityRefinement::DISP_OCCLUSION = 1;
-const int DisparityRefinement::DISP_MISMATCH = 2;
+const int DisparityRefinement::DISP_OCCLUSION = 1; //视差闭合
+const int DisparityRefinement::DISP_MISMATCH = 2; //视差误匹配
 
+// 构造函数
+// occlusionValue：遮挡值 int
+// mismatchValue：误匹配值 int
+// dispTolerance：视差容忍 uint
+// dMin：最小视差 int
+// dMax：最大视差 int
+// votingThreshold：投票阈值 uint
+// votingRatioThreshold：投票率阈值 float 
+// maxSearchDepth：最大搜索深度 uint 
+// blurKernelSize：滤波核尺寸 uint 
+// cannyThreshold1：canny边缘检测阈值1 uint 
+// cannyThreshold2：canny边缘检测阈值2 uint 
+// cannyKernelSize：canny边缘检测核尺寸 uint 
 DisparityRefinement::DisparityRefinement(uint dispTolerance, int dMin, int dMax,
                                          uint votingThreshold, float votingRatioThreshold, uint maxSearchDepth,
                                          uint blurKernelSize, uint cannyThreshold1, uint cannyThreshold2, uint cannyKernelSize)
@@ -64,7 +34,10 @@ DisparityRefinement::DisparityRefinement(uint dispTolerance, int dMin, int dMax,
     this->cannyKernelSize = cannyKernelSize;
 }
 
-int DisparityRefinement::colorDiff(const Vec3b &p1, const Vec3b &p2)
+// rgb三通道的最大差值
+// 输入：匹配目标点p1和p2
+// 输出：三通道灰度值最大的差值
+int DisparityRefinement::colorDiff(const cv::Vec3b &p1, const cv::Vec3b &p2)
 {
     int colorDiff, diff = 0;
 
@@ -77,19 +50,22 @@ int DisparityRefinement::colorDiff(const Vec3b &p1, const Vec3b &p2)
     return diff;
 }
 
-Mat DisparityRefinement::outlierElimination(const Mat &leftDisp, const Mat &rightDisp)
+// 视差图异常点识别，包括遮挡和误匹配点
+// 输入：左右视差图
+// 输出：校正后的视差图
+cv::Mat DisparityRefinement::outlierElimination(const cv::Mat &leftDisp, const cv::Mat &rightDisp)
 {
-    Size dispSize = leftDisp.size();
-    Mat disparityMap(dispSize, CV_32S);
+    cv::Size dispSize = leftDisp.size(); //以左视差图为参考，找出其中的异常点
+    cv::Mat disparityMap(dispSize, CV_32S); //视差图
 
-    //#pragma omp parallel for
+	//遍历左视差图，异常点的判定标准是：x-disp小于零，或者左右视差图的差值大于视差容忍
     for(int h = 0; h < dispSize.height; h++)
     {
         for(int w = 0; w < dispSize.width; w++)
         {
             int disparity = leftDisp.at<int>(h, w);
 
-            // if the point is an outlier, differentiate it between occlusion and mismatch
+			// 如果是异常点，区分遮挡/不匹配
             if(w - disparity < 0 || abs(disparity - rightDisp.at<int>(h, w - disparity)) > dispTolerance)
             {
                 bool occlusion = true;
@@ -100,7 +76,7 @@ Mat DisparityRefinement::outlierElimination(const Mat &leftDisp, const Mat &righ
                         occlusion = false;
                     }
                 }
-                disparity = (occlusion)? occlusionValue: mismatchValue;
+                disparity = (occlusion)? occlusionValue : mismatchValue;
             }
 
             disparityMap.at<int>(h, w) = disparity;
@@ -110,18 +86,29 @@ Mat DisparityRefinement::outlierElimination(const Mat &leftDisp, const Mat &righ
     return disparityMap;
 }
 
-void DisparityRefinement::regionVoting(Mat &disparity, const vector<Mat> &upLimits, const vector<Mat> &downLimits,
-                                       const vector<Mat> &leftLimits, const vector<Mat> &rightLimits, bool horizontalFirst)
+/***************************************************************************
+// 视差校正—区域投票法
+// 输入：
+	upLimits: 存放cv::Mat的vector，
+	downLimits: 存放cv::Mat的vector，
+	leftLimits: 存放cv::Mat的vector，
+	rightLimits: 存放cv::Mat的vector，
+	horizatalFirst: bool
+// 输出：
+	校正后的视差图
+***************************************************************************/
+void DisparityRefinement::regionVoting(cv::Mat &disparity, const vector<cv::Mat> &upLimits, const vector<cv::Mat> &downLimits,
+                                       const vector<cv::Mat> &leftLimits, const vector<cv::Mat> &rightLimits, bool horizontalFirst)
 {
-    // temporary disparity map that avoids too fast correction
-    Size dispSize = disparity.size();
-    Mat dispTemp(dispSize, CV_32S);
+	// 临时视差图
+    cv::Size dispSize = disparity.size();
+    cv::Mat dispTemp(dispSize, CV_32S);
 
-    // histogram for voting
+	// 投票直方图
     vector<int> hist(dMax - dMin + 1, 0);
 
-    const Mat *outerLimitsA, *outerLimitsB;
-    const Mat *innerLimitsA, *innerLimitsB;
+    const cv::Mat *outerLimitsA, *outerLimitsB;
+    const cv::Mat *innerLimitsA, *innerLimitsB;
 
     if(horizontalFirst)
     {
@@ -138,18 +125,20 @@ void DisparityRefinement::regionVoting(Mat &disparity, const vector<Mat> &upLimi
         innerLimitsB = &downLimits[0];
     }
 
-    // loop on the whole picture
+	// 遍历视差图
     for(size_t h = 0; h < dispSize.height; h++)
     {
         for(size_t w = 0; w < dispSize.width; w++)
         {
             // if the pixel is not an outlier
+			// 像素非异常点(视差大于最小视差)
             if(disparity.at<int>(h, w) >= dMin)
             {
                 dispTemp.at<int>(h, w) = disparity.at<int>(h, w);
             }
             else
             {
+				//视差小于dMin最小视差的情况下，为异常点
                 int outerLimitA = -outerLimitsA->at<int>(h, w);
                 int outerLimitB = outerLimitsB->at<int>(h, w);
                 int innerLimitA;
@@ -184,6 +173,7 @@ void DisparityRefinement::regionVoting(Mat &disparity, const vector<Mat> &upLimi
                         }
 
                         // if the pixel is an outlier, there is no vote to take into account
+						// 异常点没有投票
                         if(disparity.at<int>(height, width) >= dMin)
                         {
                             // increase the number of votes
@@ -219,30 +209,33 @@ void DisparityRefinement::regionVoting(Mat &disparity, const vector<Mat> &upLimi
         }
     }
 
+	// 校正后的视差图拷贝回去
     dispTemp.copyTo(disparity);
 }
 
-void DisparityRefinement::properInterpolation(Mat &disparity, const Mat &leftImage)
+// 视差图校正—插值法
+void DisparityRefinement::properInterpolation(cv::Mat &disparity, const cv::Mat &leftImage)
 {
-    Size dispSize = disparity.size();
-    Mat dispTemp(dispSize, CV_32S);
+    cv::Size dispSize = disparity.size();
+    cv::Mat dispTemp(dispSize, CV_32S);
 
     // look on the 16 different directions
+	// 16个插值方向
     int directionsW[] = {0, 2, 2, 2, 0, -2, -2, -2, 1, 2, 2, 1, -1, -2, -2, -1};
     int directionsH[] = {2, 2, 0, -2, -2, -2, 0, 2, 2, 1, -1, -2, -2, -1, 1, 2};
 
-    // loop on the whole picture
+	// 遍历视差图
     for(size_t h = 0; h < dispSize.height; h++)
     {
         for(size_t w = 0; w < dispSize.width; w++)
         {
-            // if the pixel is not an outlier
             if(disparity.at<int>(h, w) >= dMin)
             {
                 dispTemp.at<int>(h, w) = disparity.at<int>(h, w);
             }
             else
             {
+				// 邻域视差
                 vector<int> neighborDisps(16, disparity.at<int>(h, w));
                 vector<int> neighborDiffs(16, -1);
                 for(uchar direction = 0; direction < 16; direction++)
@@ -266,7 +259,7 @@ void DisparityRefinement::properInterpolation(Mat &disparity, const Mat &leftIma
                         if(inside && disparity.at<int>(hD, wD) >= dMin)
                         {
                             neighborDisps[direction] = disparity.at<int>(hD, wD);
-                            neighborDiffs[direction] = colorDiff(leftImage.at<Vec3b>(h, w), leftImage.at<Vec3b>(hD, wD));
+                            neighborDiffs[direction] = colorDiff(leftImage.at<cv::Vec3b>(h, w), leftImage.at<cv::Vec3b>(hD, wD));
                             gotDisp = true;
                         }
                     }
@@ -304,16 +297,17 @@ void DisparityRefinement::properInterpolation(Mat &disparity, const Mat &leftIma
     dispTemp.copyTo(disparity);
 }
 
-void DisparityRefinement::discontinuityAdjustment(Mat &disparity, const vector<vector<Mat> > &costs)
+// 视差校正—不连续校正法
+void DisparityRefinement::discontinuityAdjustment(cv::Mat &disparity, const vector<vector<cv::Mat> > &costs)
 {
-    Size dispSize = disparity.size();
-    Mat dispTemp, detectedEdges, dispGray;
+    cv::Size dispSize = disparity.size();
+    cv::Mat dispTemp, detectedEdges, dispGray;
 
     disparity.copyTo(dispTemp);
 
     //Edge Detection
     dispGray = convertDisp2Gray(disparity);
-    blur(dispGray, detectedEdges, Size(blurKernelSize, blurKernelSize));
+    blur(dispGray, detectedEdges, cv::Size(blurKernelSize, blurKernelSize));
     Canny(detectedEdges, detectedEdges, cannyThreshold1, cannyThreshold2, cannyKernelSize);
 
     int directionsH[] = {-1, 1, -1, 1, -1, 1, 0, 0};
@@ -393,10 +387,11 @@ void DisparityRefinement::discontinuityAdjustment(Mat &disparity, const vector<v
     dispTemp.copyTo(disparity);
 }
 
-Mat DisparityRefinement::subpixelEnhancement(Mat &disparity, const vector<vector<Mat> > &costs)
+// 视差校正—亚像素增强
+cv::Mat DisparityRefinement::subpixelEnhancement(cv::Mat &disparity, const vector<vector<cv::Mat> > &costs)
 {
-    Size dispSize = disparity.size();
-    Mat dispTemp(dispSize, CV_32F);
+    cv::Size dispSize = disparity.size();
+    cv::Mat dispTemp(dispSize, CV_32F);
 
     for(size_t h = 0; h < dispSize.height; h++)
     {
@@ -421,16 +416,17 @@ Mat DisparityRefinement::subpixelEnhancement(Mat &disparity, const vector<vector
         }
     }
 
+	// 中值滤波
     medianBlur(dispTemp, dispTemp, 3);
     return dispTemp;
 }
 
 
-
-Mat DisparityRefinement::convertDisp2Gray(const Mat &disparity)
+// 视差图转灰度图
+cv::Mat DisparityRefinement::convertDisp2Gray(const cv::Mat &disparity)
 {
-    Size dispSize = disparity.size();
-    Mat dispU(dispSize, CV_8U);
+    cv::Size dispSize = disparity.size();
+    cv::Mat dispU(dispSize, CV_8U);
 
     for(size_t h = 0; h < dispSize.height; h++)
     {

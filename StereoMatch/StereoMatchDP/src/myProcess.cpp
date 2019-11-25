@@ -1,9 +1,9 @@
-//  [8/21/2013 think]
-//pBmpBufLeft，pBmpBufRight分别为左右图像
 #include <iostream>
 #include <math.h>
 #include "readAndSave.h"
+
 using namespace std;
+
 extern unsigned char *pBmpBufLeft;//读入左图像数据的指针
 extern unsigned char *pBmpBufRight;//读入右图像数据的指针
 extern unsigned char *pResultBuf;//结果图像数据的指针
@@ -11,6 +11,7 @@ extern RGBQUAD *pColorTable;//颜色表指针
 extern int biBitCount;//图像类型，每像素位数
 
 void rgbToGray(unsigned char*);
+
 void myProcess()
 {
 	int lineByte=(bmpWidth*biBitCount/8+3)/4*4;

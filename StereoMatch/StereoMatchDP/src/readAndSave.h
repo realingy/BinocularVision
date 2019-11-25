@@ -1,6 +1,7 @@
 #ifndef HEADER_READANDSAVE
 #define HEADER_READANDSAVE
 
+#if 0
 #include <math.h>
 #include <iomanip>
 #include <stdlib.h>
@@ -21,5 +22,6 @@ using namespace std;
 bool readBmp(char *,unsigned char*);
 bool saveBmp(char *, unsigned char *, int, int,int, RGBQUAD *);
 bool getSize(char*);
+#endif
 
 #endif

@@ -2,6 +2,7 @@
 //extern const int bmpWidth=384;//图像宽
 //extern const int bmpHeight=288;//图像高
 
+#if 0
 
 unsigned char *pBmpBufLeft;//读入左图像数据的指针
 unsigned char *pBmpBufRight;//读入右图像数据的指针
@@ -180,3 +181,4 @@ bool saveBmp(char *bmpName, unsigned char *imgBuf, int width, int height,
 		return 1;
 
 	}
+#endif

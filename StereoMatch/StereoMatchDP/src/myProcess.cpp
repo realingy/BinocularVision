@@ -2,6 +2,7 @@
 #include <math.h>
 #include "readAndSave.h"
 
+#if 0
 using namespace std;
 
 extern unsigned char *pBmpBufLeft;//读入左图像数据的指针
@@ -178,3 +179,4 @@ void myProcess()
 	std::cout<<end_time-start_time<<"ms";
 	}
 }
+#endif

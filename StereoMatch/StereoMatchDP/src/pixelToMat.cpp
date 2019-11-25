@@ -1,5 +1,6 @@
 #include "readAndSave.h"
 
+#if 0
 //改为预先给定读取的图片大小
 
 extern unsigned char *pBmpBufLeft;//读入左图像数据的指针
@@ -14,6 +15,7 @@ extern int biBitCount;//图像类型，每像素位数
 
 void myProcess();
 
+/*
 //以下为像素的读取函数
 void xiang_su_du_qu(char* path1,char* path2)
 {
@@ -40,4 +42,6 @@ void xiang_su_du_qu(char* path1,char* path2)
         delete [] pColorTable;
 	}
 }
+*/
 
+#endif

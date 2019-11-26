@@ -14,4 +14,4 @@ add_subdirectory(06_PCLTest)
 add_subdirectory(07_StereoMatch)
 add_subdirectory(07_StereoBuild)
 add_subdirectory(08_StereoView)
-
+add_subdirectory(09_StereoMatchADCensus)

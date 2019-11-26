@@ -73,12 +73,13 @@ Mat distCoeffR = (Mat_<double>(5, 1) << 0.11635, -0.00121, -0.02270, -0.00039, 0
 Mat T = (Mat_<double>(3, 1) << -51.45259, 0.33218, 0.93544);    //T平移向量
 																 //[T_01,        T_02,       T_03]
 
+// 旋转矩阵是一维的？
 Mat rec = (Mat_<double>(3, 1) << 0.02186, 0.02906, -0.00787);   //rec旋转向量
 																//[rec_01,     rec_02,     rec_03]
 
 //########--双目的标定参数填写完毕-----------------------------------------------------------------------
 
-Mat R; //R矩阵，用于中间计算
+Mat R; //R相机外参旋转矩阵，用于中间计算
 
 // 保存三维坐标
 void saveXYZ(const char*filename, const Mat & mat) 
@@ -249,6 +250,10 @@ void stereo_match_bm(int, void*)
 //SGBM匹配算法
 void stereo_match_sgbm(int, void*)
 {
+	// 其中minDisparity是控制匹配搜索的第一个参数，代表了匹配搜索从哪里开始，
+	// ndisparities表示最大搜索视差数
+	// uniquenessRatio表示匹配功能函数
+	// 这三个参数比较重要，可以根据实验给予参数值。
 	int mindisparity = 2;                                                 //最小视差
 	int SADWindowSize =16;                                                //滑动窗口的大小
 	int ndisparities = 112;                                               //最大的视差，要被16整除
@@ -269,7 +274,7 @@ void stereo_match_sgbm(int, void*)
 	Mat disp;
 	sgbm->compute(rectifyImageL, rectifyImageR, disp);
 
-	Mat disp8U = Mat(disp.rows, disp.cols, CV_8UC1);                       //显示  
+	Mat disp8U = Mat(disp.rows, disp.cols, CV_8UC1);                       //显示
 
 	reprojectImageTo3D(disp, xyz, Q, true);                                //在实际求距离时，ReprojectTo3D出来的X / W, Y / W, Z / W都要乘以16(也就是W除以16)
 	xyz = xyz * 16;
@@ -314,17 +319,25 @@ static void onMouse(int event, int x, int y, int, void*)
 	}
 }
 
-
-//--主函数-------------------------------------------------------------------------
+//--主函数---------------------------------------------------------------------------
 int main()
 {
-	//--立体校正-------------------------------------------------------------------
-	//Rodrigues变换
-	Rodrigues(rec, R);
+	// Rodrigues变换
+	Rodrigues(rec, R); //旋转向量和旋转矩阵的转换，R是3*3矩阵
+	// --立体校正---------------------------------------------------------------------
+	// --得到左右相机的校正后的旋转矩阵Rl/Rr、投影矩阵Pl/Pr，重投影矩阵Q。
 	stereoRectify(cameraMatrixL, distCoeffL, cameraMatrixR, distCoeffR, imageSize, R, T, Rl, Rr, Pl, Pr, Q, CALIB_ZERO_DISPARITY,
 		0, imageSize, &validROIL, &validROIR);
-	initUndistortRectifyMap(cameraMatrixL, distCoeffL, Rl, Pr, imageSize, CV_32FC1, mapLx, mapLy);
+	initUndistortRectifyMap(cameraMatrixL, distCoeffL, Rl, Pl, imageSize, CV_32FC1, mapLx, mapLy);
 	initUndistortRectifyMap(cameraMatrixR, distCoeffR, Rr, Pr, imageSize, CV_32FC1, mapRx, mapRy);
+
+	std::cout << "rec:\n " << rec << std::endl;
+	std::cout << "R:\n " << R << std::endl;
+	std::cout << "Rl:\n " << Rl << std::endl;
+	std::cout << "Rr:\n " << Rr << std::endl;
+	std::cout << "Pl:\n " << Pl << std::endl;
+	std::cout << "Pr:\n " << Pr << std::endl;
+	std::cout << "Q:\n " << Q << std::endl;
 
 	//--读取图片，【需要调整参数的位置4】------------------------------------------
 	rgbImageL = imread("L.bmp", IMREAD_COLOR);

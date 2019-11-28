@@ -1,7 +1,6 @@
 #include <iostream>
 #include <opencv2/core/core.hpp>  
 #include "stereoprocessor.h"
-//#include <libconfig.h++>
 #include "imageprocessor.h"
 #include <cstdlib>
 #include <boost/filesystem.hpp>
@@ -145,7 +144,6 @@ int main(int argc, char *argv[])
 
     if(readSuccessfully)
 	{
-
         if(readSuccessfully)
         {
 				dMin = 0;
@@ -185,10 +183,10 @@ int main(int argc, char *argv[])
             boost::filesystem::path dir(savePath);
             boost::filesystem::create_directories(dir);
 
-          //  bool gotExtrinsic =loadQMatrix(ymlExtrinsic, Q);
+			// bool gotExtrinsic =loadQMatrix(ymlExtrinsic, Q);
 			bool gotExtrinsic =true;
-		//	bool imageList=false;
-			//imageList=loadImageList(xmlImages, fileList);
+			// bool imageList=false;
+			// imageList=loadImageList(xmlImages, fileList);
 
             if(loadImageList(xmlImages, fileList))
             {
